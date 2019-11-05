@@ -1,5 +1,7 @@
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.Semaphore;
 
 public class StencilPhaser {
 
@@ -10,7 +12,7 @@ public class StencilPhaser {
     private int interval_size;
     private int num_elements;// number of elements to transform
     private Phaser[] phasers;
-
+    CountDownLatch tasks_completed;
     StencilPhaser(double []array, int num_iterations, int num_tasks){
         this.array = array;
         this.old_array = array.clone();
@@ -19,6 +21,7 @@ public class StencilPhaser {
         this.num_tasks = num_tasks <= num_elements ? num_tasks : num_elements; //at least one element per thread, otherwise num_threads is equal to num_tasks.
         interval_size = get_interval_size();
         phasers = new Phaser[num_tasks]; // num_tasks equals the number of threads, each task transforms n elements, where n = (num_elements / num_tasks)
+        tasks_completed = new CountDownLatch(this.num_tasks);
     }
 
 
@@ -48,6 +51,7 @@ public class StencilPhaser {
             wait_neighbors(task,j);
             //can proceed to next iteration
         }
+        tasks_completed.countDown();
     }
 
     private void swap(int start, int end){
@@ -91,15 +95,13 @@ public class StencilPhaser {
     }
 
     public void iterate() throws InterruptedException {
-        Thread thread = null;
         for (int i = 0; i < phasers.length; i++) {this.phasers[i] = new Phaser(1);}
         for (int i = 1,task = 0; task < num_tasks ; i+=interval_size,task++) {
             int start = i;
             int task_index = task;//index in phaser array
-            thread = new Thread(()-> transformations(start,get_interval_end(start,task_index),task_index));
-            thread.start();
+            new Thread(()-> transformations(start,get_interval_end(start,task_index),task_index)).start();
         }
-        thread.join();
+        tasks_completed.await();
     }
 
 

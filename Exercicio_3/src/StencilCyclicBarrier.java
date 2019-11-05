@@ -18,8 +18,7 @@ public class StencilCyclicBarrier {
         this.num_iterations = num_iterations;
         this.num_tasks = num_tasks <= num_elements ? num_tasks : num_elements; //at least one element per thread, otherwise num_threads is equal to num_tasks
         interval_size = get_interval_size();
-        Runnable restart = () -> barrier.reset();
-        barrier = new CyclicBarrier(this.num_tasks,restart);
+        barrier = new CyclicBarrier(this.num_tasks);
     }
 
 
@@ -34,6 +33,7 @@ public class StencilCyclicBarrier {
             e.printStackTrace();
         } catch (BrokenBarrierException e)
         {
+            e.printStackTrace();
         }
         }
 
