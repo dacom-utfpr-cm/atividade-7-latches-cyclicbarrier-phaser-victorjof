@@ -1,7 +1,7 @@
 public class Exercicio_4 {
     public static void main(String[] args) throws InterruptedException {
         int num_workers =  Runtime.getRuntime().availableProcessors();
-        int num_elements = 100;
+        int num_elements = 1000;
         double [] a = new double[num_elements+2];//at least size 2(edge elements)
 
         fill_array(a,42);

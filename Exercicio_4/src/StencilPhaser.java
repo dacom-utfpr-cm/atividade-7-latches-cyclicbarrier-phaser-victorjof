@@ -8,6 +8,7 @@ public class StencilPhaser {
     private double[] array;
     private int num_iterations;
     private double[] old_array;
+    private double[] aux_array;
     private int num_tasks;
     private int interval_size;
     private int num_elements;// number of elements to transform
@@ -15,6 +16,7 @@ public class StencilPhaser {
     CountDownLatch tasks_completed;
     StencilPhaser(double []array, int num_iterations, int num_tasks){
         this.array = array;
+        this.aux_array = array.clone();
         this.old_array = array.clone();
         this.num_elements = array.length-2;
         this.num_iterations = num_iterations;
@@ -27,7 +29,7 @@ public class StencilPhaser {
 
 
     private void transform(int idx){
-        this.array[idx] = (this.old_array[idx-1]+this.old_array[idx+1])/2;
+        this.aux_array[idx] = (this.old_array[idx-1]+this.old_array[idx+1])/2;
     }
 
 
@@ -46,21 +48,19 @@ public class StencilPhaser {
             for (int i = start + 1; i < end - 1; i++) {
                 transform(i);
             }
-
-            swap(start, end);
+            swap();//updates array's new values after iteration
             wait_neighbors(task,j);
             //can proceed to next iteration
         }
         tasks_completed.countDown();
     }
 
-    private void swap(int start, int end){
-        /*updates values transformed in task's interval*/
-        for (int i = start; i < end ; i++) {
-            this.old_array[i] = this.array[i];
-        }
-    }
 
+    private void swap(){
+        this.array=this.aux_array;
+        this.aux_array = this.old_array;
+        this.old_array = this.array;
+    }
 
     private void wait_neighbors(int task,int phase){
         /*awaits for task's neighbors arrival at new phase*/

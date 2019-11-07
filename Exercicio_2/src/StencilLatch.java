@@ -3,8 +3,9 @@ import java.util.concurrent.CountDownLatch;
 public class StencilLatch {
 
     private double[] array;
-    private int num_iterations;
     private double[] aux_array;
+    private double[] old_array;
+    private int num_iterations;
     private int num_tasks;
     private int interval_size;
     private int num_elements;// number of elements to transform
@@ -14,6 +15,8 @@ public class StencilLatch {
     StencilLatch(double []array, int num_iterations, int num_tasks){
 
         this.array = array;
+        this.aux_array = array.clone();
+        this.old_array = array.clone();
         this.num_elements = array.length-2;
         count_latch = null;
         this.num_iterations = num_iterations;
@@ -22,9 +25,16 @@ public class StencilLatch {
 
     }
 
+
+    private void swap(){
+        this.array=this.aux_array;
+        this.aux_array = this.old_array;
+        this.old_array = this.array;
+    }
+
     private void transform(int start, int end){
         for (int i = start; i < end ; i++) {
-            this.array[i] = (aux_array[i-1]+aux_array[i+1])/2;
+            this.aux_array[i] = (old_array[i-1]+old_array[i+1])/2;
         }
         this.count_latch.countDown();//signals that assigned interval is transformed.
     }
@@ -48,7 +58,6 @@ public class StencilLatch {
 
     public void iterate() throws InterruptedException {
         for(int i=0; i<num_iterations;i++){
-            this.aux_array = this.array.clone();//updates array's new values after iteration
             this.count_latch = new CountDownLatch(num_tasks);
             for (int j = 1,task = 0; task < num_tasks ; j+=interval_size,task++) {
                 int start = j;//first index of task interval
@@ -56,6 +65,8 @@ public class StencilLatch {
                 new Thread(()-> transform(start,get_interval_end(start,task_index))).start();
             }
             count_latch.await();//awaits every task/thread to start new iteration
+            swap();//updates array's new values after iteration
+
         }
     }
 

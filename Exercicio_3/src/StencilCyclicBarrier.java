@@ -4,8 +4,9 @@ import java.util.concurrent.CyclicBarrier;
 public class StencilCyclicBarrier {
 
     private double[] array;
-    private int num_iterations;
     private double[] aux_array;
+    private double[] old_array;
+    private int num_iterations;
     private int num_tasks;
     private int interval_size;
     private int num_elements;// number of elements to transform
@@ -13,8 +14,9 @@ public class StencilCyclicBarrier {
 
     StencilCyclicBarrier(double []array, int num_iterations, int num_tasks){
         this.array = array;
+        this.aux_array = array.clone();
+        this.old_array = array.clone();
         this.num_elements = array.length-2;
-
         this.num_iterations = num_iterations;
         this.num_tasks = num_tasks <= num_elements ? num_tasks : num_elements; //at least one element per thread, otherwise num_threads is equal to num_tasks
         interval_size = get_interval_size();
@@ -54,14 +56,20 @@ public class StencilCyclicBarrier {
         }
     }
 
+    private void swap(){
+        this.array=this.aux_array;
+        this.aux_array = this.old_array;
+        this.old_array = this.array;
+    }
+
     public void iterate() throws InterruptedException {
         for(int i=0; i<num_iterations;i++){
-            this.aux_array = this.array.clone();
             for (int j = 1,task = 0; task < num_tasks ; j+=interval_size,task++) {
                 int start = j;//first index of task interval
                 int task_index = task;//index in phaser array
                 new Thread(()-> transform(start,get_interval_end(start,task_index))).start();
             }
+            swap();//updates array's new values after iteration
         }
     }
 

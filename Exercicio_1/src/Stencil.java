@@ -1,25 +1,35 @@
 public class Stencil {
 
     private double[] array;
-    private int num_iterations;
     private double[] aux_array;
+    private double[] old_array;
+
+    private int num_iterations;
 
     Stencil(double []array,int num_iterations){
         this.array = array;
+        this.aux_array = array.clone();
+        this.old_array = array.clone();
         this.num_iterations = num_iterations;
     }
 
     private void transform(int idx){
-        this.array[idx] = (aux_array[idx-1]+aux_array[idx+1])/2;
+        this.aux_array[idx] = (this.old_array[idx-1]+this.old_array[idx+1])/2;
     }
 
 
+    private void swap(){
+        this.array=this.aux_array;
+        this.aux_array = this.old_array;
+        this.old_array = this.array;
+    }
+
     public void iterate(){
         for(int i=0; i<num_iterations;i++){
-            this.aux_array = this.array.clone();
             for (int j = 1; j <this.array.length-1 ; j++) {
                 transform(j);
             }
+            swap();//updates array's new values after iteration
         }
     }
 

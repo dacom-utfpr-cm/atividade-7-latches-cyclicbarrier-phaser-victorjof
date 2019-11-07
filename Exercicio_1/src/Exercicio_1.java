@@ -1,6 +1,5 @@
 public class Exercicio_1 {
     public static void main(String[] args) throws InterruptedException {
-        int num_workers =  Runtime.getRuntime().availableProcessors();
         int num_elements = 100;
         double [] a = new double[num_elements+2];//at least size 2(edge elements)
 
